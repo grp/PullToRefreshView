@@ -1,0 +1,23 @@
+PullToRefreshView
+
+It is:
+ - a pull-to-refresh implementation
+ - very easy to implement
+ - doesn't suck
+
+To implement it:
+ - add the three files (PullToRefreshView.{h,m} and arrow.png) to your project
+ - #import "PullToRefreshView.h"
+ - add an ivar: PullToRefreshView *pull; // or whatever you want to name it
+ - in loadView or viewDidLoad, add this (and be sure to release in dealloc/viewDidUnload, etc):
+    pull = [[PullToRefreshView alloc] initWithScrollView:<your scroll view here>];
+    [pull setDelegate:self];
+    [<your scroll view here> addSubview:pull];
+ - implement two delegate methods:
+    // called when the user pulls-to-refresh
+    - (void)pullToRefreshViewShouldRefresh:(PullToRefreshView *)view;
+    // called when the date shown needs to be updated, optional
+    - (NSDate *)pullToRefreshViewLastUpdated:(PullToRefreshView *)view;
+ - call -finishedLoading on the PullToRefreshView when you finished loading (or got an error, etc)
+ - that's it! no need to forward on UIScrollView delegate methods or anything silly like that.
+    
