@@ -204,6 +204,8 @@
 #pragma mark Dealloc
 
 - (void)dealloc {
+	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
+	
     [arrowImage release];
     [activityView release];
     [statusLabel release];
