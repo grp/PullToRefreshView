@@ -31,12 +31,12 @@
 #define TEXT_COLOR	 [UIColor colorWithRed:(87.0/255.0) green:(108.0/255.0) blue:(137.0/255.0) alpha:1.0]
 #define FLIP_ANIMATION_DURATION 0.18f
 
-
 @interface PullToRefreshView (Private)
 
 @property (nonatomic, assign) PullToRefreshViewState state;
 
 @end
+
 
 @implementation PullToRefreshView
 @synthesize delegate, scrollView;
@@ -153,6 +153,12 @@
             [self setImageFlipped:NO];
             scrollView.contentInset = UIEdgeInsetsMake(60.0f, 0.0f, 0.0f, 0.0f);
 			break;
+			
+		case PullToRefreshViewStateProgrammaticRefresh:
+			statusLabel.text = @"Loading...";
+			[self showActivity:YES animated:YES];
+			[self setImageFlipped:NO];
+			break;
 
 		default:
 			break;
@@ -171,7 +177,7 @@
             } else if (state == PullToRefreshViewStateNormal) {
                 if (scrollView.contentOffset.y < -65.0f)
                     [self setState:PullToRefreshViewStateReady];
-            } else if (state == PullToRefreshViewStateLoading) {
+            } else if (state == PullToRefreshViewStateLoading || state == PullToRefreshViewStateProgrammaticRefresh) {
                 if (scrollView.contentOffset.y >= 0)
                     scrollView.contentInset = UIEdgeInsetsZero;
                 else
@@ -192,7 +198,7 @@
 }
 
 - (void)finishedLoading {
-    if (state == PullToRefreshViewStateLoading) {
+    if (state == PullToRefreshViewStateLoading || state == PullToRefreshViewStateProgrammaticRefresh) {
         [UIView beginAnimations:nil context:NULL];
         [UIView setAnimationDuration:0.3f];
         [self setState:PullToRefreshViewStateNormal];
@@ -200,17 +206,19 @@
     }
 }
 
+- (void)beginLoading {
+	[self setState:PullToRefreshViewStateProgrammaticRefresh];
+}
+
 #pragma mark -
 #pragma mark Dealloc
 
 - (void)dealloc {
-	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
-	
     [arrowImage release];
     [activityView release];
     [statusLabel release];
     [lastUpdatedLabel release];
-
+	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
     [super dealloc];
 }
 
