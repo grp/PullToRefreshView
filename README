@@ -25,11 +25,11 @@ Fork by iStopped :) In order to use this class with a UIWebView
  - add the three files (PullToRefreshView.{h,m} and arrow.png) to your project
  - #import "PullToRefreshView.h"
  - in loadView or viewDidLoad add this:
-   UIWebView *webView = [[[UIWebView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)] autorelease];
-   webView.delegate = self;
+   	UIWebView *webView = [[[UIWebView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)] autorelease];
+   	webView.delegate = self;
 	webView.tag = 999;
 	NSURLRequest *request;
-   //fill request
+   	//fill request
 	[webView loadRequest:request];
    	[webView setScalesPageToFit:YES];
    	UIScrollView* currentScrollView;
