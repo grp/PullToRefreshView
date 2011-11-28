@@ -8,6 +8,7 @@ It is:
 To implement it:
  - add the three files (PullToRefreshView.{h,m} and arrow.png) to your project
  - #import "PullToRefreshView.h"
+ - add QuartzCore to your project
  - add an ivar: PullToRefreshView *pull; // or whatever you want to name it
  - in loadView or viewDidLoad, add this (and be sure to release in dealloc/viewDidUnload, etc):
     pull = [[PullToRefreshView alloc] initWithScrollView:<your scroll view here>];
