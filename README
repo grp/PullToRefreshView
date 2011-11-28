@@ -13,6 +13,9 @@ To implement it:
     pull = [[PullToRefreshView alloc] initWithScrollView:<your scroll view here>];
     [pull setDelegate:self];
     [<your scroll view here> addSubview:pull];
+ - in dealloc and viewDidUnload, add calls to:
+   [pull containingViewDidUnload];
+   to unwind the view hierarchy.
  - implement two delegate methods:
     // called when the user pulls-to-refresh
     - (void)pullToRefreshViewShouldRefresh:(PullToRefreshView *)view;
