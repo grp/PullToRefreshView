@@ -30,21 +30,26 @@
 #import <QuartzCore/QuartzCore.h>
 
 typedef enum {
-    PullToRefreshViewStateNormal = 0,
+	PullToRefreshViewStateUninitialized = 0,
+	PullToRefreshViewStateNormal,
 	PullToRefreshViewStateReady,
-	PullToRefreshViewStateLoading
+	PullToRefreshViewStateLoading,
+	PullToRefreshViewStateOffline
 } PullToRefreshViewState;
 
 @protocol PullToRefreshViewDelegate;
 
 @interface PullToRefreshView : UIView {
 	id<PullToRefreshViewDelegate> delegate;
-    UIScrollView *scrollView;
+	UIScrollView *scrollView;
 	PullToRefreshViewState state;
+	BOOL showsSubtitle;
+	NSTimer *timeoutTimer;
 
-	UILabel *lastUpdatedLabel;
+	UILabel *subtitleLabel;
 	UILabel *statusLabel;
 	CALayer *arrowImage;
+	CALayer *offlineImage;
 	UIActivityIndicatorView *activityView;
 }
 
@@ -52,9 +57,11 @@ typedef enum {
 @property (nonatomic, assign) id<PullToRefreshViewDelegate> delegate;
 
 - (void)refreshLastUpdatedDate;
-- (void)finishedLoading;
 
 - (id)initWithScrollView:(UIScrollView *)scrollView;
+- (void)didFinishLoading;
+- (void)didStartLoading:(BOOL)scrollToReveal;
+- (void)containingViewDidUnload;
 
 @end
 

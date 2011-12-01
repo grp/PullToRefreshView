@@ -9,11 +9,15 @@ To implement it:
  - add the four files (PullToRefreshView.{h,m}, arrow.png and arrow@2x.png) to your project
  - add the Quartz framework to your project if you haven't done so yet
  - #import "PullToRefreshView.h"
+ - add QuartzCore to your project
  - add an ivar: PullToRefreshView *pull; // or whatever you want to name it
  - in loadView or viewDidLoad, add this (and be sure to release in dealloc/viewDidUnload, etc):
     pull = [[PullToRefreshView alloc] initWithScrollView:<your scroll view here>];
     [pull setDelegate:self];
     [<your scroll view here> addSubview:pull];
+ - in dealloc and viewDidUnload, add calls to:
+   [pull containingViewDidUnload];
+   to unwind the view hierarchy.
  - implement two delegate methods:
     // called when the user pulls-to-refresh
     - (void)pullToRefreshViewShouldRefresh:(PullToRefreshView *)view;
