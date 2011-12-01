@@ -32,7 +32,8 @@
 typedef enum {
     PullToRefreshViewStateNormal = 0,
 	PullToRefreshViewStateReady,
-	PullToRefreshViewStateLoading
+	PullToRefreshViewStateLoading,
+	PullToRefreshViewStateProgrammaticRefresh
 } PullToRefreshViewState;
 
 @protocol PullToRefreshViewDelegate;
@@ -53,9 +54,8 @@ typedef enum {
 
 - (void)refreshLastUpdatedDate;
 - (void)finishedLoading;
-
 - (id)initWithScrollView:(UIScrollView *)scrollView;
-
+- (void)beginLoading;
 @end
 
 @protocol PullToRefreshViewDelegate <NSObject>
