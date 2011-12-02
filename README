@@ -22,3 +22,8 @@ To implement it:
  - call -finishedLoading on the PullToRefreshView when you finished loading (or got an error, etc)
  - that's it! no need to forward on UIScrollView delegate methods or anything silly like that.
     
+To use with a web view:
+    pullToRefreshView = [[PullToRefreshView alloc] initWithWebView:<your web view here>];
+    [pullToRefreshView setDelegate:self];
+    [pullToRefreshView.scrollview addSubview:pullToRefreshView];
+
