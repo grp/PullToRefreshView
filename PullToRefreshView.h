@@ -55,6 +55,7 @@ typedef enum {
 - (void)finishedLoading;
 
 - (id)initWithScrollView:(UIScrollView *)scrollView;
+- (id)initWithWebView:(UIWebView *)webView;
 
 @end
 

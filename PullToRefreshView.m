@@ -111,6 +111,17 @@
     return self;
 }
 
+- (id)initWithWebView:(UIWebView *)webView {
+    UIScrollView *currentScrollView = nil;
+    for (UIView *subView in webView.subviews) {
+        if ([subView isKindOfClass:[UIScrollView class]]) {
+            currentScrollView = (UIScrollView*)subView;
+            break;
+        }
+    }    
+    return [self initWithScrollView:currentScrollView];
+}
+
 #pragma mark -
 #pragma mark Setters
 
