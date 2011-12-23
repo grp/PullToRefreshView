@@ -188,6 +188,9 @@
                     [delegate pullToRefreshViewShouldRefresh:self];
             }
         }
+        
+        // Fix for view moving laterally with webView
+        self.frame = CGRectMake(scrollView.contentOffset.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
     }
 }
 
