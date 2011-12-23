@@ -34,6 +34,7 @@ typedef enum {
 	kPullToRefreshViewStateNormal,
 	kPullToRefreshViewStateReady,
 	kPullToRefreshViewStateLoading,
+    kPullToRefreshViewStateProgrammaticRefresh,
 	kPullToRefreshViewStateOffline
 } PullToRefreshViewState;
 
@@ -57,8 +58,8 @@ typedef enum {
 - (void)refreshLastUpdatedDate;
 
 - (id)initWithScrollView:(UIScrollView *)scrollView;
-- (void)didFinishLoading;
-- (void)didStartLoading:(BOOL)scrollToReveal;
+- (void)finishedLoading;
+- (void)beginLoading;
 - (void)containingViewDidUnload;
 
 @end

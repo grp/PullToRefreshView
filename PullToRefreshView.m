@@ -50,7 +50,7 @@
 
     [UIView beginAnimations:nil context:nil];
     [UIView setAnimationDuration:(animated ? kPullToRefreshViewAnimationDuration : 0.0)];
-    arrowImage.opacity = (shouldShow ? 0.0 : 1.0);
+    arrowImage.opacity = (show ? 0.0 : 1.0);
     [UIView commitAnimations];
 }
 
@@ -130,8 +130,12 @@
 	[formatter release];
 }
 
+- (void)beginLoading {
+    [self setState:kPullToRefreshViewStateProgrammaticRefresh];
+}
+
 - (void)finishedLoading {
-    if (state == kPullToRefreshViewStateLoading) {
+    if (state == kPullToRefreshViewStateLoading || state == kPullToRefreshViewStateProgrammaticRefresh) {
         [UIView beginAnimations:nil context:NULL];
         [UIView setAnimationDuration:0.3f];
         [self setState:kPullToRefreshViewStateNormal];
@@ -158,6 +162,7 @@
             scrollView.contentInset = UIEdgeInsetsZero;
 		    break;
 		case kPullToRefreshViewStateLoading:
+        case kPullToRefreshViewStateProgrammaticRefresh:
 		    statusLabel.text = @"Loading…";
             [self showActivity:YES animated:YES];
             [self setImageFlipped:NO];
@@ -189,7 +194,7 @@
 					// go to the ready state.
 					[self setState:kPullToRefreshViewStateReady];
 				}
-			} else if (state == kPullToRefreshViewStateLoading) {
+			} else if (state == kPullToRefreshViewStateLoading || state == kPullToRefreshViewStateProgrammaticRefresh) {
 				// if the user scrolls the view down while we're loading, make sure the loading screen is visible if they scroll to the top:
 
 				if (scrollView.contentOffset.y >= 0) {
