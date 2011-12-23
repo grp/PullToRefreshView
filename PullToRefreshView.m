@@ -27,10 +27,13 @@
 //
 
 #import "PullToRefreshView.h"
+#import <math.h>
 
-#define TEXT_COLOR	 [UIColor colorWithRed:(87.0/255.0) green:(108.0/255.0) blue:(137.0/255.0) alpha:1.0]
-#define FLIP_ANIMATION_DURATION 0.18f
-
+#define kPullToRefreshViewBackgroundColor [UIColor colorWithRed:226.0/255.0 green:231.0/255.0 blue:237.0/255.0 alpha:1.0]
+#define kPullToRefreshViewTitleColor [UIColor colorWithRed:(87.0/255.0) green:(108.0/255.0) blue:(137.0/255.0) alpha:1.0]
+#define kPullToRefreshViewSubtitleColor kPullToRefreshViewTitleColor
+#define kPullToRefreshViewAnimationDuration 0.18f
+#define kPullToRefreshViewTriggerOffset -65.0f
 
 @interface PullToRefreshView (Private)
 
@@ -41,57 +44,62 @@
 @implementation PullToRefreshView
 @synthesize delegate, scrollView;
 
-- (void)showActivity:(BOOL)shouldShow animated:(BOOL)animated {
-    if (shouldShow) [activityView startAnimating];
+- (void)showActivity:(BOOL)show animated:(BOOL)animated {
+    if (show) [activityView startAnimating];
     else [activityView stopAnimating];
 
     [UIView beginAnimations:nil context:nil];
-    [UIView setAnimationDuration:(animated ? 0.1f : 0.0)];
+    [UIView setAnimationDuration:(animated ? kPullToRefreshViewAnimationDuration : 0.0)];
     arrowImage.opacity = (shouldShow ? 0.0 : 1.0);
     [UIView commitAnimations];
 }
 
 - (void)setImageFlipped:(BOOL)flipped {
     [UIView beginAnimations:nil context:NULL];
-    [UIView setAnimationDuration:0.1f];
+    [UIView setAnimationDuration:kPullToRefreshViewAnimationDuration];
     arrowImage.transform = (flipped ? CATransform3DMakeRotation(M_PI * 2, 0.0f, 0.0f, 1.0f) : CATransform3DMakeRotation(M_PI, 0.0f, 0.0f, 1.0f));
     [UIView commitAnimations];
 }
 
 - (id)initWithScrollView:(UIScrollView *)scroll {
-    CGRect frame = CGRectMake(0.0f, 0.0f - scroll.bounds.size.height, scroll.bounds.size.width, scroll.bounds.size.height);
+	CGRect frame = CGRectMake(0.0f, 0.0f - scroll.bounds.size.height, scroll.bounds.size.width, scroll.bounds.size.height);
 
-    if ((self = [super initWithFrame:frame])) {
-        scrollView = scroll;
-        [scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:NULL];
+	if ((self = [super initWithFrame:frame])) {
+		scrollView = [scroll retain];
+		[scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:NULL];
 
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		self.backgroundColor = [UIColor colorWithRed:226.0/255.0 green:231.0/255.0 blue:237.0/255.0 alpha:1.0];
+        self.backgroundColor = kPullToRefreshViewBackgroundColor;
 
-		lastUpdatedLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, frame.size.height - 30.0f, self.frame.size.width, 20.0f)];
-		lastUpdatedLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		lastUpdatedLabel.font = [UIFont systemFontOfSize:12.0f];
-		lastUpdatedLabel.textColor = TEXT_COLOR;
-		lastUpdatedLabel.shadowColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
-		lastUpdatedLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
-		lastUpdatedLabel.backgroundColor = [UIColor clearColor];
-		lastUpdatedLabel.textAlignment = UITextAlignmentCenter;
-		[self addSubview:lastUpdatedLabel];
+		subtitleLabel = [[UILabel alloc] init];
+		subtitleLabel.frame = CGRectMake(0.0f, frame.size.height - 30.0f, self.frame.size.width, 20.0f);
+		subtitleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+		subtitleLabel.font = [UIFont systemFontOfSize:12.0f];
+		subtitleLabel.textColor = kPullToRefreshViewSubtitleColor;
+        subtitleLabel.shadowColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
+		subtitleLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
+		subtitleLabel.backgroundColor = [UIColor clearColor];
+		subtitleLabel.textAlignment = UITextAlignmentCenter;
+		[self addSubview:subtitleLabel];
 
-		statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, frame.size.height - 48.0f, self.frame.size.width, 20.0f)];
+		statusLabel = [[UILabel alloc] init];
 		statusLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		statusLabel.font = [UIFont boldSystemFontOfSize:13.0f];
-		statusLabel.textColor = TEXT_COLOR;
-		statusLabel.shadowColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
-		statusLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
+		statusLabel.font = [UIFont systemFontOfSize:12.f];
+		statusLabel.textColor = kPullToRefreshViewTitleColor;
+        statusLabel.shadowColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
+        statusLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
 		statusLabel.backgroundColor = [UIColor clearColor];
 		statusLabel.textAlignment = UITextAlignmentCenter;
 		[self addSubview:statusLabel];
 
 		arrowImage = [[CALayer alloc] init];
-		arrowImage.frame = CGRectMake(25.0f, frame.size.height - 60.0f, 24.0f, 52.0f);
+        arrowImage.frame = CGRectMake(25.0f, frame.size.height - 60.0f, 24.0f, 52.0f);
 		arrowImage.contentsGravity = kCAGravityResizeAspect;
-		arrowImage.contents = (id) [UIImage imageNamed:@"arrow"].CGImage;
+        arrowImage.contents = (id) [UIImage imageNamed:@"arrow"].CGImage;
+
+        activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        activityView.frame = CGRectMake(30.0f, frame.size.height - 38.0f, 20.0f, 20.0f);
+        [self addSubview:activityView];
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 40000
 		if ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) {
@@ -100,15 +108,9 @@
 #endif
 
 		[self.layer addSublayer:arrowImage];
+	}
 
-        activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-		activityView.frame = CGRectMake(30.0f, frame.size.height - 38.0f, 20.0f, 20.0f);
-		[self addSubview:activityView];
-
-		[self setState:PullToRefreshViewStateNormal];
-    }
-
-    return self;
+	return self;
 }
 
 #pragma mark -
@@ -120,101 +122,125 @@
 	if ([delegate respondsToSelector:@selector(pullToRefreshViewLastUpdated:)])
 		date = [delegate pullToRefreshViewLastUpdated:self];
 
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setAMSymbol:@"AM"];
-    [formatter setPMSymbol:@"PM"];
-    [formatter setDateFormat:@"MM/dd/yy hh:mm a"];
-    lastUpdatedLabel.text = [NSString stringWithFormat:@"Last Updated: %@", [formatter stringFromDate:date]];
-    [formatter release];
+	NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+	[formatter setAMSymbol:@"AM"];
+	[formatter setPMSymbol:@"PM"];
+	[formatter setDateFormat:@"MM/dd/yy hh:mm a"];
+	subtitleLabel.text = [NSString stringWithFormat:@"Last Updated: %@", [formatter stringFromDate:date]];
+	[formatter release];
+}
+
+- (void)finishedLoading {
+    if (state == kPullToRefreshViewStateLoading) {
+        [UIView beginAnimations:nil context:NULL];
+        [UIView setAnimationDuration:0.3f];
+        [self setState:kPullToRefreshViewStateNormal];
+        [UIView commitAnimations];
+    }
 }
 
 - (void)setState:(PullToRefreshViewState)state_ {
-    state = state_;
+	if (state_ == state) return;
+	state = state_;
 
 	switch (state) {
-		case PullToRefreshViewStateReady:
-			statusLabel.text = @"Release to refresh...";
-			[self showActivity:NO animated:NO];
+		case kPullToRefreshViewStateReady:
+		    statusLabel.text = @"Release to refresh…";
+            [self showActivity:NO animated:NO];
             [self setImageFlipped:YES];
             scrollView.contentInset = UIEdgeInsetsZero;
-			break;
-
-		case PullToRefreshViewStateNormal:
-			statusLabel.text = @"Pull down to refresh...";
-			[self showActivity:NO animated:NO];
+		    break;
+		case kPullToRefreshViewStateNormal:
+		    statusLabel.text = @"Pull down to refresh…";
+            [self showActivity:NO animated:NO];
             [self setImageFlipped:NO];
-			[self refreshLastUpdatedDate];
+            [self refreshLastUpdatedDate];
             scrollView.contentInset = UIEdgeInsetsZero;
-			break;
-
-		case PullToRefreshViewStateLoading:
-			statusLabel.text = @"Loading...";
-			[self showActivity:YES animated:YES];
+		    break;
+		case kPullToRefreshViewStateLoading:
+		    statusLabel.text = @"Loading…";
+            [self showActivity:YES animated:YES];
             [self setImageFlipped:NO];
-            scrollView.contentInset = UIEdgeInsetsMake(60.0f, 0.0f, 0.0f, 0.0f);
-			break;
-
+		    scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0, 0, 0);
+		    break;
 		default:
-			break;
+		    break;
 	}
+
+	[self setNeedsLayout];
 }
 
 #pragma mark -
 #pragma mark UIScrollView
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if ([keyPath isEqualToString:@"contentOffset"]) {
-        if (scrollView.isDragging) {
-            if (state == PullToRefreshViewStateReady) {
-                if (scrollView.contentOffset.y > -65.0f && scrollView.contentOffset.y < 0.0f) 
-                    [self setState:PullToRefreshViewStateNormal];
-            } else if (state == PullToRefreshViewStateNormal) {
-                if (scrollView.contentOffset.y < -65.0f)
-                    [self setState:PullToRefreshViewStateReady];
-            } else if (state == PullToRefreshViewStateLoading) {
-                if (scrollView.contentOffset.y >= 0)
-                    scrollView.contentInset = UIEdgeInsetsZero;
-                else
-                    scrollView.contentInset = UIEdgeInsetsMake(MIN(-scrollView.contentOffset.y, 60.0f), 0, 0, 0);
-            }
-        } else {
-            if (state == PullToRefreshViewStateReady) {
-                [UIView beginAnimations:nil context:NULL];
-                [UIView setAnimationDuration:0.2f];
-                [self setState:PullToRefreshViewStateLoading];
-                [UIView commitAnimations];
+	if ([keyPath isEqualToString:@"contentOffset"]) {
+		if (scrollView.isDragging) {
+			// if we were in a refresh state
+			if (state == kPullToRefreshViewStateReady) {
+				// but now we're in between the "trigger" offset and 0
+				if (scrollView.contentOffset.y > kPullToRefreshViewTriggerOffset && scrollView.contentOffset.y < 0.0f) {
+					// reset to "pull me to refresh!"
+					[self setState:kPullToRefreshViewStateNormal];
+				}
+			} else if (state == kPullToRefreshViewStateNormal) {
+				// if we're in a normal state and we're above the top of the scrollView and we pass the max
+				if (scrollView.contentOffset.y < kPullToRefreshViewTriggerOffset) {
+					// go to the ready state.
+					[self setState:kPullToRefreshViewStateReady];
+				}
+			} else if (state == kPullToRefreshViewStateLoading) {
+				// if the user scrolls the view down while we're loading, make sure the loading screen is visible if they scroll to the top:
 
-                if ([delegate respondsToSelector:@selector(pullToRefreshViewShouldRefresh:)])
-                    [delegate pullToRefreshViewShouldRefresh:self];
-            }
-        }
-        
+				if (scrollView.contentOffset.y >= 0) {
+					// this lets the table headers float to the top
+					scrollView.contentInset = UIEdgeInsetsZero;
+				} else {
+					// but show loading if they go past the top of the tableview
+					scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0, 0, 0);
+				}
+			}
+		} else {
+			if (state == kPullToRefreshViewStateReady) {
+				// if we're in state ready and a drag stops, then transition to loading.
+
+				[UIView beginAnimations:nil context:NULL];
+				[UIView setAnimationDuration:kPullToRefreshViewAnimationDuration];
+				[self setState:kPullToRefreshViewStateLoading];
+				[UIView commitAnimations];
+
+				if ([delegate respondsToSelector:@selector(pullToRefreshViewShouldRefresh:)])
+					[delegate pullToRefreshViewShouldRefresh:self];
+			}
+		}
+
         // Fix for view moving laterally with webView
         self.frame = CGRectMake(scrollView.contentOffset.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
-    }
-}
-
-- (void)finishedLoading {
-    if (state == PullToRefreshViewStateLoading) {
-        [UIView beginAnimations:nil context:NULL];
-        [UIView setAnimationDuration:0.3f];
-        [self setState:PullToRefreshViewStateNormal];
-        [UIView commitAnimations];
-    }
+	}
 }
 
 #pragma mark -
-#pragma mark Dealloc
+#pragma mark Memory management
+
+- (void)containingViewDidUnload {
+	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
+	[scrollView release];
+	scrollView = nil;
+}
 
 - (void)dealloc {
-	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
-	
-    [arrowImage release];
-    [activityView release];
-    [statusLabel release];
-    [lastUpdatedLabel release];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    [super dealloc];
+	if (scrollView != nil) { // probably leaking the scrollView
+		NSLog(@"PullToRefreshView: Leaking a scrollView?");
+		[scrollView release];
+	}
+
+	[arrowImage release];
+	[statusLabel release];
+	[subtitleLabel release];
+
+	[super dealloc];
 }
 
 @end
