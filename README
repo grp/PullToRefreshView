@@ -4,9 +4,10 @@ It is:
  - a pull-to-refresh implementation
  - very easy to implement
  - doesn't suck
+ - compatable with ARC and non-ARC
 
 To implement it:
- - add the four files (PullToRefreshView.{h,m}, arrow.png and arrow@2x.png) to your project
+ - add the five files (PullToRefreshView.{h,m}, ARCMacros.h, arrow.png and arrow@2x.png) to your project
  - add the Quartz framework to your project if you haven't done so yet
  - #import "PullToRefreshView.h"
  - add QuartzCore to your project
