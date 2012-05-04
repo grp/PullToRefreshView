@@ -82,7 +82,7 @@
 		subtitleLabel.textAlignment = UITextAlignmentCenter;
 		[self addSubview:subtitleLabel];
 
-		statusLabel = [[UILabel alloc] init];
+		statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, frame.size.height - 48.0f, self.frame.size.width, 20.0f)];
 		statusLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		statusLabel.font = [UIFont systemFontOfSize:12.f];
 		statusLabel.textColor = kPullToRefreshViewTitleColor;
@@ -108,6 +108,8 @@
 #endif
 
 		[self.layer addSublayer:arrowImage];
+
+        [self setState:kPullToRefreshViewStateNormal];
 	}
 
 	return self;
@@ -167,6 +169,8 @@
             [self showActivity:YES animated:YES];
             [self setImageFlipped:NO];
 		    scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0, 0, 0);
+            if ([delegate respondsToSelector:@selector(pullToRefreshViewShouldRefresh:)])
+                [delegate pullToRefreshViewShouldRefresh:self];
 		    break;
 		default:
 		    break;
@@ -213,9 +217,6 @@
 				[UIView setAnimationDuration:kPullToRefreshViewAnimationDuration];
 				[self setState:kPullToRefreshViewStateLoading];
 				[UIView commitAnimations];
-
-				if ([delegate respondsToSelector:@selector(pullToRefreshViewShouldRefresh:)])
-					[delegate pullToRefreshViewShouldRefresh:self];
 			}
 		}
 
