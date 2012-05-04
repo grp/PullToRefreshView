@@ -39,6 +39,12 @@
 
 @property (nonatomic, assign) PullToRefreshViewState state;
 
+- (BOOL)isScrolledToVisible;
+- (BOOL)isScrolledToLimit;
+- (void)parkVisible;
+- (void)handleDragWhileLoading;
+- (void)updatePosition;
+
 @end
 
 @implementation PullToRefreshView
@@ -57,22 +63,27 @@
 - (void)setImageFlipped:(BOOL)flipped {
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationDuration:kPullToRefreshViewAnimationDuration];
-    arrowImage.transform = (flipped ? CATransform3DMakeRotation(M_PI * 2, 0.0f, 0.0f, 1.0f) : CATransform3DMakeRotation(M_PI, 0.0f, 0.0f, 1.0f));
+    arrowImage.transform = (flipped ^ isBottom ? CATransform3DMakeRotation(M_PI * 2, 0.0f, 0.0f, 1.0f) : CATransform3DMakeRotation(M_PI, 0.0f, 0.0f, 1.0f));
     [UIView commitAnimations];
 }
 
-- (id)initWithScrollView:(UIScrollView *)scroll {
-	CGRect frame = CGRectMake(0.0f, 0.0f - scroll.bounds.size.height, scroll.bounds.size.width, scroll.bounds.size.height);
+- (id)initWithScrollView:(UIScrollView *)scroll atBottom:(BOOL)bottom {
+    CGFloat bottomOffset = (scroll.contentSize.height < scroll.bounds.size.height) ? scroll.bounds.size.height : scroll.contentSize.height;
+    CGFloat offset = bottom ? bottomOffset : 0.0f - scroll.bounds.size.height;
+	CGRect frame = CGRectMake(0.0f, offset, scroll.bounds.size.width, scroll.bounds.size.height);
 
 	if ((self = [super initWithFrame:frame])) {
+        CGFloat visibleBottom = bottom ? -kPullToRefreshViewTriggerOffset : self.frame.size.height;
+        isBottom = bottom;
 		scrollView = [scroll retain];
 		[scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:NULL];
+        [scrollView addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionNew context:NULL];
 
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         self.backgroundColor = kPullToRefreshViewBackgroundColor;
 
 		subtitleLabel = [[UILabel alloc] init];
-		subtitleLabel.frame = CGRectMake(0.0f, frame.size.height - 30.0f, self.frame.size.width, 20.0f);
+		subtitleLabel.frame = CGRectMake(0.0f, visibleBottom - 30.0f, self.frame.size.width, 20.0f);
 		subtitleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		subtitleLabel.font = [UIFont systemFontOfSize:12.0f];
 		subtitleLabel.textColor = kPullToRefreshViewSubtitleColor;
@@ -82,7 +93,7 @@
 		subtitleLabel.textAlignment = UITextAlignmentCenter;
 		[self addSubview:subtitleLabel];
 
-		statusLabel = [[UILabel alloc] init];
+		statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, visibleBottom - 48.0f, self.frame.size.width, 20.0f)];
 		statusLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		statusLabel.font = [UIFont systemFontOfSize:12.f];
 		statusLabel.textColor = kPullToRefreshViewTitleColor;
@@ -93,12 +104,14 @@
 		[self addSubview:statusLabel];
 
 		arrowImage = [[CALayer alloc] init];
-        arrowImage.frame = CGRectMake(25.0f, frame.size.height - 60.0f, 24.0f, 52.0f);
+        UIImage *arrow = [UIImage imageNamed:@"arrow"];
+        arrowImage.contents = (id) arrow.CGImage;
+        arrowImage.frame = CGRectMake(25.0f, visibleBottom + kPullToRefreshViewTriggerOffset + 5.0f, arrow.size.width, arrow.size.height);
 		arrowImage.contentsGravity = kCAGravityResizeAspect;
-        arrowImage.contents = (id) [UIImage imageNamed:@"arrow"].CGImage;
+        [self setImageFlipped:NO];
 
         activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        activityView.frame = CGRectMake(30.0f, frame.size.height - 38.0f, 20.0f, 20.0f);
+        activityView.frame = CGRectMake(30.0f, visibleBottom - 38.0f, 20.0f, 20.0f);
         [self addSubview:activityView];
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 40000
@@ -111,6 +124,10 @@
 	}
 
 	return self;
+}
+
+- (id)initWithScrollView:(UIScrollView *)scroll {
+    return [self initWithScrollView:scroll atBottom:NO];
 }
 
 #pragma mark -
@@ -152,10 +169,9 @@
 		    statusLabel.text = @"Release to refresh…";
             [self showActivity:NO animated:NO];
             [self setImageFlipped:YES];
-            scrollView.contentInset = UIEdgeInsetsZero;
 		    break;
 		case kPullToRefreshViewStateNormal:
-		    statusLabel.text = @"Pull down to refresh…";
+		    statusLabel.text = [NSString stringWithFormat:@"Pull %@ to refresh...", isBottom ? @"up" : @"down"];
             [self showActivity:NO animated:NO];
             [self setImageFlipped:NO];
             [self refreshLastUpdatedDate];
@@ -166,13 +182,71 @@
 		    statusLabel.text = @"Loading…";
             [self showActivity:YES animated:YES];
             [self setImageFlipped:NO];
-		    scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0, 0, 0);
+            [self parkVisible];
 		    break;
 		default:
 		    break;
 	}
 
 	[self setNeedsLayout];
+}
+
+- (BOOL)isScrolledToVisible {
+    if (isBottom) {
+        BOOL scrolledBelowContent;
+        if (scrollView.contentSize.height < scrollView.frame.size.height) {
+            scrolledBelowContent = scrollView.contentOffset.y > 0.0f;
+        } else {
+            scrolledBelowContent = scrollView.contentOffset.y > (scrollView.contentSize.height - scrollView.frame.size.height);
+        }
+        return scrolledBelowContent && ![self isScrolledToLimit];
+    } else {
+        BOOL scrolledAboveContent = scrollView.contentOffset.y < 0.0f;
+        return scrolledAboveContent && ![self isScrolledToLimit];
+    }
+}
+
+- (BOOL)isScrolledToLimit {
+    if (isBottom) {
+        if (scrollView.contentSize.height < scrollView.frame.size.height) {
+            return scrollView.contentOffset.y >= -kPullToRefreshViewTriggerOffset;
+        } else {
+            return scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height) - kPullToRefreshViewTriggerOffset;
+        }
+    } else {
+        return scrollView.contentOffset.y <= kPullToRefreshViewTriggerOffset;
+    }
+}
+
+- (void)parkVisible {
+    if (isBottom) {
+        CGFloat extra = (scrollView.frame.size.height - scrollView.contentSize.height);
+        if (extra < 0.0f) extra = 0.0f;
+        scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, -kPullToRefreshViewTriggerOffset + extra, 0.0f);
+    } else {
+        scrollView.contentInset = UIEdgeInsetsMake(-kPullToRefreshViewTriggerOffset, 0.0f, 0.0f, 0.0f);
+    }
+}
+
+- (void)handleDragWhileLoading {
+    if ([self isScrolledToLimit] || [self isScrolledToVisible]) {
+        // allow scrolled portion of view to display
+        if (isBottom) {
+            CGFloat extra = (scrollView.frame.size.height - scrollView.contentSize.height);
+            if (extra < 0.0f) extra = 0.0f;
+            CGFloat visiblePortion = scrollView.contentOffset.y - (scrollView.contentSize.height - scrollView.frame.size.height);
+            scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, fminf(visiblePortion, -kPullToRefreshViewTriggerOffset + extra), 0.0f);
+        } else {
+            scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0.0f, 0.0f, 0.0f);
+        }
+    }
+}
+
+- (void)updatePosition {
+    if (isBottom) {
+        CGFloat bottomOffset = (scrollView.contentSize.height < scrollView.bounds.size.height) ? scrollView.bounds.size.height : scrollView.contentSize.height;
+        self.frame = CGRectMake(0.0f, bottomOffset, scrollView.bounds.size.width, scrollView.bounds.size.height);
+    }
 }
 
 #pragma mark -
@@ -184,26 +258,19 @@
 			// if we were in a refresh state
 			if (state == kPullToRefreshViewStateReady) {
 				// but now we're in between the "trigger" offset and 0
-				if (scrollView.contentOffset.y > kPullToRefreshViewTriggerOffset && scrollView.contentOffset.y < 0.0f) {
+				if ([self isScrolledToVisible]) {
 					// reset to "pull me to refresh!"
 					[self setState:kPullToRefreshViewStateNormal];
 				}
 			} else if (state == kPullToRefreshViewStateNormal) {
 				// if we're in a normal state and we're above the top of the scrollView and we pass the max
-				if (scrollView.contentOffset.y < kPullToRefreshViewTriggerOffset) {
+				if ([self isScrolledToLimit]) {
 					// go to the ready state.
 					[self setState:kPullToRefreshViewStateReady];
 				}
 			} else if (state == kPullToRefreshViewStateLoading || state == kPullToRefreshViewStateProgrammaticRefresh) {
-				// if the user scrolls the view down while we're loading, make sure the loading screen is visible if they scroll to the top:
-
-				if (scrollView.contentOffset.y >= 0) {
-					// this lets the table headers float to the top
-					scrollView.contentInset = UIEdgeInsetsZero;
-				} else {
-					// but show loading if they go past the top of the tableview
-					scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0, 0, 0);
-				}
+				// if the user scrolls the view down while we're loading, make sure the loading screen is visible if they scroll to the top or bottom:
+                [self handleDragWhileLoading];
 			}
 		} else {
 			if (state == kPullToRefreshViewStateReady) {
@@ -221,7 +288,9 @@
 
         // Fix for view moving laterally with webView
         self.frame = CGRectMake(scrollView.contentOffset.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
-	}
+	} else if ([keyPath isEqualToString:@"contentSize"]) {
+        [self updatePosition];
+    }
 }
 
 #pragma mark -
@@ -229,7 +298,7 @@
 
 - (void)containingViewDidUnload {
 	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
-	[scrollView release];
+    [scrollView removeObserver:self forKeyPath:@"contentSize"];
 	scrollView = nil;
 }
 
