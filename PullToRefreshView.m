@@ -134,6 +134,10 @@
     [self setState:kPullToRefreshViewStateProgrammaticRefresh];
 }
 
+- (void)setStatusLabelText:(NSString *)text {
+    [statusLabel setText:text];
+}
+
 - (void)finishedLoading {
     if (state == kPullToRefreshViewStateLoading || state == kPullToRefreshViewStateProgrammaticRefresh) {
         [UIView beginAnimations:nil context:NULL];
