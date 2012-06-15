@@ -136,6 +136,7 @@
 
 - (void)finishedLoading {
     if (state == kPullToRefreshViewStateLoading || state == kPullToRefreshViewStateProgrammaticRefresh) {
+        [self refreshLastUpdatedDate];
         [UIView beginAnimations:nil context:NULL];
         [UIView setAnimationDuration:0.3f];
         [self setState:kPullToRefreshViewStateNormal];
@@ -158,7 +159,6 @@
 		    statusLabel.text = @"Pull down to refresh…";
             [self showActivity:NO animated:NO];
             [self setImageFlipped:NO];
-            [self refreshLastUpdatedDate];
             scrollView.contentInset = UIEdgeInsetsZero;
 		    break;
 		case kPullToRefreshViewStateLoading:
