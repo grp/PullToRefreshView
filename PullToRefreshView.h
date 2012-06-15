@@ -28,7 +28,7 @@
 
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
-#import "ARCMacros.h"
+#import "PullToRefreshARCMacros.h"
 
 typedef enum {
 	kPullToRefreshViewStateUninitialized = 0,
