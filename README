@@ -9,23 +9,30 @@ It is:
  
 
 To implement it:
+
+Setup:
  - add the five files (PullToRefreshView.{h,m}, ARCMacros.h, arrow.png and arrow@2x.png) to your project
  - add the Quartz framework to your project if you haven't done so yet
- - #import "PullToRefreshView.h"
  - add QuartzCore to your project
- - add an ivar: PullToRefreshView *pull; // or whatever you want to name it
- - in loadView or viewDidLoad, add this (and be sure to release in dealloc/viewDidUnload, etc):
+
+in your .h:
+ - add #import "PullToRefreshView.h"
+ - add the instance variable: PullToRefreshView *pull;
+
+in your .m:
+ - add the following to loadView or viewDidLoad (and be sure to release in dealloc/viewDidUnload, etc):
     pull = [[PullToRefreshView alloc] initWithScrollView:<your scroll view here>];
     [pull setDelegate:self];
     [<your scroll view here> addSubview:pull];
  - in dealloc and viewDidUnload, add calls to:
-   [pull containingViewDidUnload];
-   to unwind the view hierarchy.
+    [pull containingViewDidUnload];
  - implement two delegate methods:
-    // called when the user pulls-to-refresh
-    - (void)pullToRefreshViewShouldRefresh:(PullToRefreshView *)view;
-    // called when the date shown needs to be updated, optional
-    - (NSDate *)pullToRefreshViewLastUpdated:(PullToRefreshView *)view;
- - call -finishedLoading on the PullToRefreshView when you finished loading (or got an error, etc)
- - that's it! no need to forward on UIScrollView delegate methods or anything silly like that.
+    - (void)pullToRefreshViewShouldRefresh:(PullToRefreshView *)view; // required 
+    - (NSDate *)pullToRefreshViewLastUpdated:(PullToRefreshView *)view; // optional
+ - In pullToRefreshViewShouldRefresh: call the following when you have finished loading (or hit an error):
+    [pull finishedLoading];
+
+
+
+
     
