@@ -248,7 +248,8 @@
 - (void)parkVisible {
     if (isBottom) {
         CGFloat extra = (scrollView.frame.size.height - scrollView.contentSize.height);
-        if (extra < 0.0f) extra = 0.0f;
+        if (extra < 0.0f) {
+            extra = 0.0f;
             scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, -kPullToRefreshViewTriggerOffset + extra, 0.0f);
         } else {	
             scrollView.contentInset = UIEdgeInsetsMake(-kPullToRefreshViewTriggerOffset, 0.0f, 0.0f, 0.0f);
