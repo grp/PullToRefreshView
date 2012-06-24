@@ -261,9 +261,11 @@
     if ([self isScrolledToLimit] || [self isScrolledToVisible]) {
         if (isBottom) {	
             CGFloat extra = (scrollView.frame.size.height - scrollView.contentSize.height);
-        if (extra < 0.0f) extra = 0.0f;
-            CGFloat visiblePortion = scrollView.contentOffset.y - (scrollView.contentSize.height - scrollView.frame.size.height);	
-            scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, fminf(visiblePortion, -kPullToRefreshViewTriggerOffset + extra), 0.0f);	
+            if (extra < 0.0f) {
+                extra = 0.0f;
+                CGFloat visiblePortion = scrollView.contentOffset.y - (scrollView.contentSize.height - scrollView.frame.size.height);	
+                scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, fminf(visiblePortion, -kPullToRefreshViewTriggerOffset + extra), 0.0f);
+            }
         } else {
             scrollView.contentInset = UIEdgeInsetsMake(fminf(-scrollView.contentOffset.y, -kPullToRefreshViewTriggerOffset), 0.0f, 0.0f, 0.0f);
         }
