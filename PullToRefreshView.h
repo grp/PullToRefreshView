@@ -28,6 +28,7 @@
 
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import "ARCMacros.h"
 
 typedef enum {
 	kPullToRefreshViewStateUninitialized = 0,
@@ -41,9 +42,10 @@ typedef enum {
 @protocol PullToRefreshViewDelegate;
 
 @interface PullToRefreshView : UIView {
-	id<PullToRefreshViewDelegate> delegate;
+	__unsafe_unretained id<PullToRefreshViewDelegate> delegate;
 	UIScrollView *scrollView;
 	PullToRefreshViewState state;
+    BOOL isBottom;
 
 	UILabel *subtitleLabel;
 	UILabel *statusLabel;
@@ -58,8 +60,10 @@ typedef enum {
 - (void)refreshLastUpdatedDate;
 
 - (id)initWithScrollView:(UIScrollView *)scrollView;
+- (id)initWithScrollView:(UIScrollView *)scrollView atBottom:(BOOL)bottom;
 - (void)finishedLoading;
 - (void)beginLoading;
+- (void)setStatusLabelText:(NSString *)text;
 - (void)containingViewDidUnload;
 
 @end
