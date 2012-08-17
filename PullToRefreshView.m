@@ -238,6 +238,7 @@
 
 	if (scrollView != nil) { // probably leaking the scrollView
 		NSLog(@"PullToRefreshView: Leaking a scrollView?");
+		[scrollView removeObserver:self forKeyPath:@"contentOffset"];
 		[scrollView release];
 	}
 
