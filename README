@@ -1,5 +1,7 @@
 PullToRefreshView
 
+Note: I would avoid using this right now, at least until I find time to resolve a number of issues with it.
+
 It is:
  - a pull-to-refresh implementation
  - very easy to implement
