@@ -28,43 +28,28 @@
 
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
-#import "ARCMacros.h"
 
 typedef enum {
-	kPullToRefreshViewStateUninitialized = 0,
-	kPullToRefreshViewStateNormal,
-	kPullToRefreshViewStateReady,
-	kPullToRefreshViewStateLoading,
-    kPullToRefreshViewStateProgrammaticRefresh,
-	kPullToRefreshViewStateOffline
+	PullToRefreshViewStateUninitialized = 0,
+	PullToRefreshViewStateNormal,
+	PullToRefreshViewStateReady,
+	PullToRefreshViewStateLoading,
+    PullToRefreshViewStateProgrammaticRefresh,
+	PullToRefreshViewStateOffline
 } PullToRefreshViewState;
 
 @protocol PullToRefreshViewDelegate;
 
-@interface PullToRefreshView : UIView {
-	__unsafe_unretained id<PullToRefreshViewDelegate> delegate;
-	UIScrollView *scrollView;
-	PullToRefreshViewState state;
-    BOOL isBottom;
+@interface PullToRefreshView : UIView
 
-	UILabel *subtitleLabel;
-	UILabel *statusLabel;
-	CALayer *arrowImage;
-	CALayer *offlineImage;
-	UIActivityIndicatorView *activityView;
-}
-
-@property (nonatomic, readonly) UIScrollView *scrollView;
 @property (nonatomic, assign) id<PullToRefreshViewDelegate> delegate;
 
 - (void)refreshLastUpdatedDate;
 
 - (id)initWithScrollView:(UIScrollView *)scrollView;
-- (id)initWithScrollView:(UIScrollView *)scrollView atBottom:(BOOL)bottom;
 - (void)finishedLoading;
 - (void)beginLoading;
 - (void)setStatusLabelText:(NSString *)text;
-- (void)containingViewDidUnload;
 
 @end
 
