@@ -95,7 +95,7 @@
 		arrowImage = [[CALayer alloc] init];
         arrowImage.frame = CGRectMake(25.0f, frame.size.height - 60.0f, 24.0f, 52.0f);
 		arrowImage.contentsGravity = kCAGravityResizeAspect;
-        arrowImage.contents = (id) [UIImage imageNamed:@"arrow"].CGImage;
+        arrowImage.contents = (id) [UIImage imageNamed:@"PullToRefreshViewArrow"].CGImage;
 
         activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
         activityView.frame = CGRectMake(30.0f, frame.size.height - 38.0f, 20.0f, 20.0f);
