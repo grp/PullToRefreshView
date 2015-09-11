@@ -28,6 +28,7 @@
 
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import "PullToRefreshARCMacros.h"
 
 typedef enum {
 	kPullToRefreshViewStateUninitialized = 0,
@@ -41,7 +42,7 @@ typedef enum {
 @protocol PullToRefreshViewDelegate;
 
 @interface PullToRefreshView : UIView {
-	id<PullToRefreshViewDelegate> delegate;
+	__unsafe_unretained id<PullToRefreshViewDelegate> delegate;
 	UIScrollView *scrollView;
 	PullToRefreshViewState state;
 

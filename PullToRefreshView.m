@@ -65,7 +65,7 @@
 	CGRect frame = CGRectMake(0.0f, 0.0f - scroll.bounds.size.height, scroll.bounds.size.width, scroll.bounds.size.height);
 
 	if ((self = [super initWithFrame:frame])) {
-		scrollView = [scroll retain];
+		scrollView = SAFE_ARC_RETAIN(scroll);
 		[scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:NULL];
 
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -127,7 +127,7 @@
 	[formatter setPMSymbol:@"PM"];
 	[formatter setDateFormat:@"MM/dd/yy hh:mm a"];
 	subtitleLabel.text = [NSString stringWithFormat:@"Last Updated: %@", [formatter stringFromDate:date]];
-	[formatter release];
+	SAFE_ARC_RELEASE(formatter);
 }
 
 - (void)beginLoading {
@@ -229,7 +229,7 @@
 
 - (void)containingViewDidUnload {
 	[scrollView removeObserver:self forKeyPath:@"contentOffset"];
-	[scrollView release];
+	SAFE_ARC_RELEASE(scrollView);
 	scrollView = nil;
 }
 
@@ -238,14 +238,14 @@
 
 	if (scrollView != nil) { // probably leaking the scrollView
 		NSLog(@"PullToRefreshView: Leaking a scrollView?");
-		[scrollView release];
+		SAFE_ARC_RELEASE(scrollView);
 	}
 
-	[arrowImage release];
-	[statusLabel release];
-	[subtitleLabel release];
+	SAFE_ARC_RELEASE(arrowImage);
+	SAFE_ARC_RELEASE(statusLabel);
+	SAFE_ARC_RELEASE(subtitleLabel);
 
-	[super dealloc];
+	SAFE_ARC_SUPER_DEALLOC();
 }
 
 @end
