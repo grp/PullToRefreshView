@@ -134,6 +134,10 @@
     [self setState:kPullToRefreshViewStateProgrammaticRefresh];
 }
 
+- (void)setStatusLabelText:(NSString *)text {
+    [statusLabel setText:text];
+}
+
 - (void)finishedLoading {
     if (state == kPullToRefreshViewStateLoading || state == kPullToRefreshViewStateProgrammaticRefresh) {
         [self refreshLastUpdatedDate];

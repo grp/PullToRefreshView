@@ -60,6 +60,7 @@ typedef enum {
 - (id)initWithScrollView:(UIScrollView *)scrollView;
 - (void)finishedLoading;
 - (void)beginLoading;
+- (void)setStatusLabelText:(NSString *)text;
 - (void)containingViewDidUnload;
 
 @end
